@@ -1,12 +1,10 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import com.google.gson.Gson;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 import parser.JsonParser;
 import parser.NoSuchFileException;
 import shop.Cart;
@@ -25,11 +23,13 @@ public class UnitTests {
   private static VirtualItem virtualItem = new VirtualItem();
   private static VirtualItem virtualItem2 = new VirtualItem();
 
-  @BeforeAll
-  public static void setItemsAndAddToCart() {
-    realItem.setWeight(1000);
-    realItem.setName("Fiat500");
-    realItem.setPrice(10000);
+  @Parameters({"weight","itemName", "price"})
+  @BeforeClass
+  public static void setItemsAndAddToCart(@Optional("500") double weight,@Optional("Tesla") String itemName,
+      @Optional("100000") double price) {
+    realItem.setWeight(weight);
+    realItem.setName(itemName);
+    realItem.setPrice(price);
 
     virtualItem.setSizeOnDisk(5000);
     virtualItem.setName("App");
@@ -42,56 +42,58 @@ public class UnitTests {
     virtualItem2.setPrice(10);
   }
 
-  @Tag("shopTests")
-  @Test
+  @Test(groups = "shopTests")
   public void realItemToStringTest() {
    String stringRealItem = realItem.toString();
-   assertEquals(String.format("Class: %s; Name: %s; Price: %s; ", realItem.getClass(), realItem.getName(), realItem.getPrice()) + "Weight"
+   Assert.assertEquals(String.format("Class: %s; Name: %s; Price: %s; ", realItem.getClass(), realItem.getName(), realItem.getPrice()) +
+       "Weight"
            + ": " + realItem.getWeight(), stringRealItem);
   }
 
-  @Tag("shopTests")
-  @Test
+  @Test(groups = "shopTests")
   public void virtualItemToStringTest() {
     String stringVirtualItem = virtualItem.toString();
-    assertEquals(String.format("Class: %s; Name: %s; Price: %s; ", virtualItem.getClass(), virtualItem.getName(), virtualItem.getPrice()) +
+    Assert.assertEquals(String.format("Class: %s; Name: %s; Price: %s; ", virtualItem.getClass(), virtualItem.getName(),
+        virtualItem.getPrice()) +
         "Size on disk: " + virtualItem.getSizeOnDisk(), stringVirtualItem);
   }
 
-  @Tag("shopTests")
-  @Test
-  public void addItemAndGetTotalPriceTest() {
+  @Parameters("totalPrice")
+  @Test(groups = "shopTests")
+  public void addItemAndGetTotalPriceTest(@Optional("120036.0") double totalPrice) {
     testCart.addVirtualItem(virtualItem2);
-    assertEquals(12036, testCart.getTotalPrice());
+    Assert.assertEquals(totalPrice, testCart.getTotalPrice());
   }
 
-  @Tag("shopTests")
-  @Test
+  @Test(groups = "shopTests")
   public void deleteItemAndGetTotalPriceTest() {
     double expectedTotalPrice = testCart.getTotalPrice();
     testCart.addVirtualItem(virtualItem2);
     testCart.deleteVirtualItem(virtualItem2);
-    assertEquals(expectedTotalPrice, testCart.getTotalPrice());
+    Assert.assertEquals(expectedTotalPrice, testCart.getTotalPrice());
   }
 
-  @Tag("jsonParserTests")
-  @ParameterizedTest
-  @ValueSource( strings = {
-      "src/test/resources/notExistingFile.json",
-      "\\src\\test\\resources\\tanya-cart.json",
-      "",
-      "test/resources/tanya-cart.json",
-      "src/test/resources/"})
-  public void fileNotFoundExceptionTest(File file) {
-    Exception exception = assertThrows(NoSuchFileException.class,
-        () -> jsonParser.readFromFile(file));
-    assertEquals(exception.getMessage(), (String.format("File %s.json not found!", file)));
+  @DataProvider
+  public Object[][] filePath() {
+    return new Object[][] {
+        {"src/test/resources/notExistingFile.json"},
+        {"\\src\\test\\resources\\tanya-cart.json"},
+        {"test/resources/tanya-cart.json"},
+        {"src/test/resources/"},
+        {""},
+    };
   }
 
-  @Tag("jsonParserTests")
-  @Test
+ @Test(dataProvider = "filePath",
+     expectedExceptions = NoSuchFileException.class,
+     groups = "jsonParserTests")
+ public void fileNotFoundExceptionTest(String path) throws NoSuchFileException{
+    jsonParser.readFromFile( new File(path));
+      }
+
+  @Test(groups = "jsonParserTests")
   public void cartIsReadFromJsonFile() {
     Cart fromFile = jsonParser.readFromFile(TANYA_CART_FILE);
-    assertEquals(EXPECTED_TANYA_CART_JSON, gson.toJson(fromFile));
+    Assert.assertEquals(EXPECTED_TANYA_CART_JSON, gson.toJson(fromFile));
   }
 }

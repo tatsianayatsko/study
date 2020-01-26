@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="shopTests">
+    <parameter name="weight" value="1000" />
+    <parameter name="itemName" value="Fiat" />
+    <parameter name="price" value="10000" />
+    <parameter name="totalPrice" value="12036.0" />
+    <test name="task20">
+        <classes>
+            <class name="UnitTests">
+            <methods>
+                <exclude name = "fileNotFoundExceptionTest"/>
+                <exclude name = "cartIsReadFromJsonFile"/>
+            </methods>
+            </class>
+        </classes>
+    </test> <!-- Test -->
+</suite> <!-- Suite -->

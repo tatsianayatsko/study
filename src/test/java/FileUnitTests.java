@@ -1,13 +1,9 @@
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.google.gson.Gson;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 import parser.JsonParser;
 import shop.Cart;
 import shop.RealItem;
@@ -18,7 +14,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-@Tag("JsonParserTests")
+@Test(groups = "jsonParserTests")
 public class FileUnitTests {
   private Cart testCart;
   private static final File TEST_CART_FILE = new File("src/main/resources/test-cart.json");
@@ -30,7 +26,7 @@ public class FileUnitTests {
   private RealItem realItem = new RealItem();
   private VirtualItem virtualItem = new VirtualItem();
 
-  @BeforeEach
+  @BeforeMethod
   public void createCartWithItems() {
 
     realItem.setWeight(1000);
@@ -46,11 +42,12 @@ public class FileUnitTests {
     testCart.addVirtualItem(virtualItem);
   }
 
-  @Test
-  @Disabled("As per task 10.5")
+
+ // @Disabled("As per task 20.5")
+  @Test(enabled = false)
   public void fileIsCreated() {
     jsonParser.writeToFile(testCart);
-    Assertions.assertTrue(TEST_CART_FILE.exists());
+    Assert.assertTrue(TEST_CART_FILE.exists());
   }
 
   @Test
@@ -58,12 +55,13 @@ public class FileUnitTests {
     jsonParser.writeToFile(testCart);
     try (BufferedReader reader = new BufferedReader(new FileReader(TEST_CART_FILE))) {
       Cart cartFromFile = gson.fromJson(reader.readLine(), Cart.class);
-      assertAll(
-          () -> assertEquals(testCart.getCartName(), cartFromFile.getCartName()),
-          () -> assertEquals(testCart.getTotalPrice(),cartFromFile.getTotalPrice()));
+      SoftAssert soft = new SoftAssert();
+      soft.assertEquals(testCart.getCartName(), cartFromFile.getCartName(),"Error on 1st validation");
+      soft.assertEquals(testCart.getTotalPrice(),cartFromFile.getTotalPrice(),"Error on 2nd validation");
+      soft.assertAll();
     } catch (IOException e) {
       e.printStackTrace();
-      Assertions.fail("File is not read");
+      Assert.fail("File is not read");
     }
   }
 
@@ -71,10 +69,10 @@ public class FileUnitTests {
   public void cartIsReadFromJsonFile() {
     jsonParser.writeToFile(testCart);
     Cart fromFile = jsonParser.readFromFile(TEST_CART_FILE);
-    assertEquals(EXPECTED_TEST_CART_JSON, gson.toJson(fromFile));
+    Assert.assertEquals(EXPECTED_TEST_CART_JSON, gson.toJson(fromFile));
   }
 
-  @AfterEach
+  @AfterTest
   public void afterEachTest() {
     TEST_CART_FILE.delete();
   }
